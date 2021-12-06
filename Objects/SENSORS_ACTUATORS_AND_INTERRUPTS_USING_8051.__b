@@ -1,0 +1,4 @@
+TRANSFER
+".\Objects\STARTUP.obj",
+".\Objects\main.obj" 
+TO ".\Objects\SENSORS_ACTUATORS_AND_INTERRUPTS_USING_8051.LIB"

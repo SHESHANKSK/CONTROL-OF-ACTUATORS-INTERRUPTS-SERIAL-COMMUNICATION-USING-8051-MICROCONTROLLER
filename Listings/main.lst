@@ -1,0 +1,163 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              12/06/2021 15:53:33 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\SOFTWARES\C51\BIN\C51.EXE main.c ROM(SMALL) OPTIMIZE(8,SPEED) DEBUG OBJECTEXTEND PRINT(.\Listing
+                    -s\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include <string.h>
+   3          
+   4          //Allocating the Pins to the Lights
+   5          sbit light_01 = P1 ^ 0;
+   6          sbit light_02 = P1 ^ 1;
+   7          sbit light_03 = P1 ^ 2;
+   8          sbit light_04 = P1 ^ 3;
+   9          
+  10          //Allocating Pins to Motor 01
+  11          sbit motor_1_pin01 = P0 ^ 0;
+  12          sbit motor_1_pin02 = P0 ^ 1;
+  13          
+  14          //Allocating Pins to Motor 02
+  15          sbit motor_2_pin01 = P0 ^ 2;
+  16          sbit motor_2_pin02 = P0 ^ 3;
+  17          
+  18          //Allocating Pins to Motor 03
+  19          sbit motor_3_pin01 = P2 ^ 0;
+  20          sbit motor_3_pin02 = P2 ^ 1;
+  21          
+  22          //Allocating Pins to Motor 04
+  23          sbit motor_4_pin01 = P2 ^ 2;
+  24          sbit motor_4_pin02 = P2 ^ 3;
+  25          
+  26          #define textsize 5
+  27          
+  28          volatile char text[textsize];
+  29          volatile int
+  30            textIndex;
+  31          
+  32          void Delay()
+  33          {
+  34   1        int count = 0;
+  35   1        while (count != 25000)
+  36   1        {
+  37   2          TMOD = 0x01;
+  38   2          TH0 = 0xF8;
+  39   2          TL0 = 0xCC;
+  40   2          TR0 = 1;
+  41   2          while (!TF0)
+  42   2            ;
+  43   2          TR0 = 0;
+  44   2          TF0 = 0;
+  45   2          count++;
+  46   2        }
+  47   1      }
+  48          
+  49          void motor_and_light_status(int s_motor_1_pin01, int s_motor_1_pin02, int s_motor_2_pin01, int s_motor_2_p
+             -in02, int s_motor_3_pin01, int s_motor_3_pin02, int s_motor_4_pin01, int s_motor_4_pin02, int s_light_01, int s_light_02
+             -, int s_light_03, int s_light_04)
+  50          {
+  51   1        motor_1_pin01 = s_motor_1_pin01;
+  52   1        motor_1_pin02 = s_motor_1_pin02;
+C51 COMPILER V9.60.0.0   MAIN                                                              12/06/2021 15:53:33 PAGE 2   
+
+  53   1        motor_2_pin01 = s_motor_2_pin01;
+  54   1        motor_2_pin02 = s_motor_2_pin02;
+  55   1        motor_3_pin01 = s_motor_3_pin01;
+  56   1        motor_3_pin02 = s_motor_3_pin02;
+  57   1        motor_4_pin01 = s_motor_4_pin01;
+  58   1        motor_4_pin02 = s_motor_4_pin02;
+  59   1        light_01 = s_light_01;
+  60   1        light_02 = s_light_02;
+  61   1        light_03 = s_light_03;
+  62   1        light_04 = s_light_04;
+  63   1      }
+  64          
+  65          void Initialize_ext_int()
+  66          {
+  67   1        EA = 1;
+  68   1        ES = 1;
+  69   1      }
+  70          
+  71          void UART_Init()
+  72          {
+  73   1        TMOD = 0x20;
+  74   1        TH1 = 0xFD;
+  75   1        SCON = 0x50;
+  76   1        TR1 = 1;
+  77   1      }
+  78          
+  79          void Serial_ISR() interrupt 4
+  80          {
+  81   1        if (TI == 1)
+  82   1        {
+  83   2          if (text[textIndex] != 0)
+  84   2            SBUF = text[textIndex++];
+  85   2          TI = 0;
+  86   2        }
+  87   1        if (RI == 1)
+  88   1        {
+  89   2          P3 = SBUF;
+  90   2          RI = 0;
+  91   2        }
+  92   1      }
+  93          
+  94          void write_to_buffer(char *str)
+  95          {
+  96   1        int i;
+  97   1        memset(text, 0, textsize);
+  98   1        for (i = 0; str[i] != 0 && i < textsize; i++)
+  99   1        {
+ 100   2          text[i] = str[i];
+ 101   2        }
+ 102   1        text[4] = 0;
+ 103   1        SBUF = text[0];
+ 104   1        textIndex = 1;
+ 105   1      }
+ 106          
+ 107          void main()
+ 108          {
+ 109   1      
+ 110   1        while(1)
+ 111   1        {
+ 112   2          P3 = 0x00;
+ 113   2          Initialize_ext_int();
+ 114   2          UART_Init();
+C51 COMPILER V9.60.0.0   MAIN                                                              12/06/2021 15:53:33 PAGE 3   
+
+ 115   2          motor_and_light_status(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+ 116   2          Delay();
+ 117   2          motor_and_light_status(0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
+ 118   2          Delay();
+ 119   2          motor_and_light_status(0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0);
+ 120   2          Delay();
+ 121   2          motor_and_light_status(0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0);
+ 122   2          Delay();
+ 123   2          motor_and_light_status(0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0);
+ 124   2          Delay();
+ 125   2          motor_and_light_status(0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0);
+ 126   2          Delay();
+ 127   2          motor_and_light_status(0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0);
+ 128   2          Delay();
+ 129   2          motor_and_light_status(0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1);
+ 130   2          Delay();
+ 131   2          write_to_buffer("PARTY");
+ 132   2        }
+ 133   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    622    ----
+   CONSTANT SIZE    =      6    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7      27
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
